@@ -436,7 +436,7 @@ HTML = r"""<!doctype html>
 </div>
 
 <script>
-let all=[],sortKey="time",sortAsc=false;
+let all=[],sortKey="time",sortAsc=true;
 
 function $(id){return document.getElementById(id)}
 
