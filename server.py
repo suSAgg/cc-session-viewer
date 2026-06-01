@@ -73,7 +73,7 @@ def load_history_meta():
 # ── 对话扫描 ──────────────────────────────────────────
 
 def decode_project(name):
-    """将 -Users-susu-mytools-xxx 还原为 /Users/susu/mytools/xxx"""
+    """将 -Users-name-mytools-xxx 还原为 /Users/name/mytools/xxx 格式"""
     return "/" + name.replace("-", "/")
 
 
