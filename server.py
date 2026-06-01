@@ -2,12 +2,13 @@
 """Claude Code 对话管理器
 
 扫描 ~/.claude/projects/ 下所有对话，提供 Web 界面浏览和搜索。
-通过公共后端代理访问：http://localhost:3999/tools/cc-session-viewer/
 直接访问：http://127.0.0.1:8767
 """
 
 import json
 import os
+import re
+import secrets
 import time
 import http.server
 from pathlib import Path
@@ -16,6 +17,21 @@ PROJECTS_DIR = Path.home() / ".claude" / "projects"
 HISTORY_FILE = Path.home() / ".claude" / "history.jsonl"
 PORT = 8767
 HOST = "127.0.0.1"
+AUTH_TOKEN = secrets.token_hex(32)
+
+UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
+def _is_safe_in_dir(path, root):
+    """Reject symlinks and paths that resolve outside root."""
+    try:
+        if path.is_symlink():
+            return False
+        rp = path.resolve()
+        rr = root.resolve()
+        return str(rp).startswith(str(rr) + os.sep) or rp == rr
+    except Exception:
+        return False
 
 
 # ── 项目路径映射 ──────────────────────────────────────
@@ -127,7 +143,7 @@ def scan_sessions():
     pmap, nmap = load_history_meta()
 
     for proj_dir in sorted(PROJECTS_DIR.iterdir()):
-        if not proj_dir.is_dir():
+        if not proj_dir.is_dir() or not _is_safe_in_dir(proj_dir, PROJECTS_DIR):
             continue
         real_path = decode_project(proj_dir.name)
 
@@ -173,8 +189,10 @@ def scan_sessions():
 
 def delete_session(session_id):
     """删除指定 session_id 的 JSONL 文件"""
+    if not UUID_RE.match(session_id):
+        return {"ok": False, "error": "无效的 session ID"}
     for proj_dir in PROJECTS_DIR.iterdir():
-        if not proj_dir.is_dir():
+        if not proj_dir.is_dir() or not _is_safe_in_dir(proj_dir, PROJECTS_DIR):
             continue
         f = proj_dir / f"{session_id}.jsonl"
         if f.exists():
@@ -193,7 +211,7 @@ def cleanup_old(dry_run=True):
     to_delete = []
 
     for proj_dir in PROJECTS_DIR.iterdir():
-        if not proj_dir.is_dir():
+        if not proj_dir.is_dir() or not _is_safe_in_dir(proj_dir, PROJECTS_DIR):
             continue
         for f in proj_dir.glob("*.jsonl"):
             try:
@@ -219,7 +237,7 @@ def cleanup_old(dry_run=True):
 
 # ── HTML ──────────────────────────────────────────────
 
-HTML = r"""<!doctype html>
+HTML_TEMPLATE = r"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -550,6 +568,7 @@ HTML = r"""<!doctype html>
 </div>
 
 <script>
+const AUTH_TOKEN = "__AUTH_TOKEN__";
 let all=[];
 
 function $(id){return document.getElementById(id)}
@@ -704,7 +723,7 @@ function openModal(sid){
     </div>`:""}
     <div class="field">
       <div class="field-label">恢复命令</div>
-      <div class="field-value mono">cd "${esc(s.project)}" && claude --resume "${s.id}"</div>
+      <div class="field-value mono">cd ${esc(shellQuote(s.project))} && claude --resume ${esc(shellQuote(s.id))}</div>
     </div>
     <div class="modal-actions">
       <button class="pill go" onclick="copyResume('${escAttr(s.project)}','${escAttr(s.id)}',this)">复制恢复命令</button>
@@ -729,8 +748,12 @@ document.addEventListener("keydown",e=>{
 
 // ── Actions ──
 
+function shellQuote(s){
+  return "'"+s.replace(/'/g,"'\\''")+"'"
+}
+
 async function copyResume(project,sid,btn){
-  const text=`cd "${project}" && claude --resume "${sid}"`
+  const text=`cd ${shellQuote(project)} && claude --resume ${shellQuote(sid)}`
   copyText(text,btn)
 }
 
@@ -752,7 +775,7 @@ async function copyText(text,btn){
 
 async function loadSessions(){
   try{
-    const r=await fetch("api/sessions")
+    const r=await fetch("api/sessions",{headers:{"X-Auth-Token":AUTH_TOKEN}})
     all=await r.json()
   }catch(e){
     all=[]
@@ -761,10 +784,16 @@ async function loadSessions(){
   const projects=[...new Set(all.map(s=>s.project).filter(Boolean))].sort()
   const sel=$("proj-filter")
   const cur=sel.value
-  sel.innerHTML='<option value="">全部项目</option>'+projects.map(p=>{
-    const label=p.split("/").filter(Boolean).slice(-2).join("/")||p
-    return `<option value="${esc(p)}">${esc(label)}</option>`
-  }).join("")
+  sel.textContent=""
+  const defOpt=document.createElement("option")
+  defOpt.value="";defOpt.textContent="全部项目"
+  sel.appendChild(defOpt)
+  projects.forEach(p=>{
+    const opt=document.createElement("option")
+    opt.value=p
+    opt.textContent=p.split("/").filter(Boolean).slice(-2).join("/")||p
+    sel.appendChild(opt)
+  })
   sel.value=cur
   render()
 }
@@ -775,7 +804,7 @@ async function deleteOne(sid,btn){
   btn.textContent="..."
   btn.disabled=true
   try{
-    const r=await fetch("api/sessions/"+sid,{method:"DELETE"})
+    const r=await fetch("api/sessions/"+sid,{method:"DELETE",headers:{"X-Auth-Token":AUTH_TOKEN}})
     const d=await r.json()
     if(d.ok){
       btn.textContent="已删除"
@@ -800,7 +829,7 @@ async function doCleanup(){
   btn.textContent="扫描中..."
   btn.disabled=true
   try{
-    const r=await fetch("api/cleanup")
+    const r=await fetch("api/cleanup",{headers:{"X-Auth-Token":AUTH_TOKEN}})
     const d=await r.json()
     const msg=$("cleanup-msg")
     if(d.count===0){
@@ -824,7 +853,7 @@ async function doCleanup(){
 
 async function doDelete(){
   try{
-    const r=await fetch("api/cleanup",{method:"POST"})
+    const r=await fetch("api/cleanup",{method:"POST",headers:{"X-Auth-Token":AUTH_TOKEN}})
     const d=await r.json()
     $("cleanup-msg").className="cleanup-msg ok"
     $("cleanup-msg").innerHTML="已删除 "+d.count+" 个对话"
@@ -848,14 +877,24 @@ loadSessions()
 # ── HTTP 服务 ─────────────────────────────────────────
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    def _check_auth(self):
+        """验证 API 请求的 auth token"""
+        token = self.headers.get("X-Auth-Token", "")
+        return secrets.compare_digest(token, AUTH_TOKEN)
+
     def do_GET(self):
         path = self.path.split("?")[0]
 
         if path == "/" or path == "/index.html":
-            self.send_html(HTML)
+            html = HTML_TEMPLATE.replace("__AUTH_TOKEN__", AUTH_TOKEN)
+            self.send_html(html)
         elif path == "/api/sessions":
+            if not self._check_auth():
+                return self.send_error(403)
             self.send_json(scan_sessions())
         elif path == "/api/cleanup":
+            if not self._check_auth():
+                return self.send_error(403)
             self.send_json(cleanup_old(dry_run=True))
         elif path == "/favicon.ico":
             self.send_response(204)
@@ -864,14 +903,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
+        if not self._check_auth():
+            return self.send_error(403)
         if self.path.split("?")[0] == "/api/cleanup":
             self.send_json(cleanup_old(dry_run=False))
         else:
             self.send_error(404)
 
     def do_DELETE(self):
+        if not self._check_auth():
+            return self.send_error(403)
         path = self.path.split("?")[0]
-        # /api/sessions/<session-id>
         if path.startswith("/api/sessions/") and len(path) > len("/api/sessions/"):
             sid = path[len("/api/sessions/"):]
             self.send_json(delete_session(sid))
@@ -882,6 +924,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'")
         self.end_headers()
         self.wfile.write(html.encode("utf-8"))
 
@@ -890,16 +934,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body.encode("utf-8"))
+
+    def send_error(self, code, message=None, explain=None):
+        self.send_response(code)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"Forbidden" if code == 403 else b"Not Found")
 
     def log_message(self, format, *args):
         pass
 
 
 if __name__ == "__main__":
-    print(f"\n  CC 对话管理器 → http://{HOST}:{PORT}")
-    print(f"  通过公共后端访问 → http://localhost:3999/tools/cc-session-viewer/\n")
+    print(f"\n  CC Session Viewer → http://{HOST}:{PORT}")
+    print(f"  Auth token: {AUTH_TOKEN}\n")
     httpd = http.server.HTTPServer((HOST, PORT), Handler)
     try:
         httpd.serve_forever()
