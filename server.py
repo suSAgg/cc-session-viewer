@@ -243,7 +243,8 @@ HTML = r"""<!doctype html>
     --red-hover:#b91c1c;
     --shadow:0 1px 2px rgba(0,0,0,.04);
     --shadow-md:0 4px 12px rgba(0,0,0,.06);
-    --radius:10px;
+    --shadow-lg:0 12px 32px rgba(0,0,0,.1);
+    --radius:12px;
     --radius-sm:6px;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -261,7 +262,7 @@ HTML = r"""<!doctype html>
     border-bottom:1px solid var(--border);
     padding:20px 24px 16px;
   }
-  .header-inner{max-width:860px;margin:0 auto}
+  .header-inner{max-width:1100px;margin:0 auto}
   .title{
     font-family:Charter,Georgia,serif;
     font-size:22px;font-weight:600;
@@ -300,91 +301,188 @@ HTML = r"""<!doctype html>
   .btn-danger:hover{background:#fef2f2}
   /* ── cleanup msg ── */
   .cleanup-msg{
-    display:none;max-width:860px;margin:0 auto 12px;padding:12px 16px;
+    display:none;max-width:1100px;margin:0 auto 12px;padding:12px 16px;
     border-radius:var(--radius-sm);font-size:12px;
     background:#fef2f2;border:1px solid #fecaca;color:var(--red);
   }
   .cleanup-msg.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
-  /* ── main list ── */
+  /* ── main grid ── */
   .main{padding:0 24px 40px}
-  .list{max-width:860px;margin:0 auto}
+  .grid-wrap{max-width:1100px;margin:0 auto}
   /* ── date separator ── */
   .date-sep{
+    grid-column:1/-1;
     font-family:Charter,Georgia,serif;
-    font-size:12px;color:var(--faint);
-    padding:20px 0 8px;letter-spacing:.05em;
-    text-transform:uppercase;
+    font-size:16px;font-weight:600;
+    color:var(--muted);
+    padding:24px 0 10px;letter-spacing:.03em;
+  }
+  .date-sep:first-child{padding-top:16px}
+  /* ── card grid ── */
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
   }
   /* ── card ── */
   .card{
     background:var(--card);
     border:1px solid var(--border);
     border-radius:var(--radius);
-    margin-bottom:6px;
     box-shadow:var(--shadow);
-    transition:box-shadow .2s,border-color .2s;
+    transition:box-shadow .2s,border-color .2s,transform .15s;
+    cursor:pointer;
+    display:flex;flex-direction:column;
     overflow:hidden;
   }
-  .card:hover{box-shadow:var(--shadow-md);border-color:#d8d0c4}
+  .card:hover{
+    box-shadow:var(--shadow-md);
+    border-color:#d8d0c4;
+    transform:translateY(-1px);
+  }
   .card.named{border-left:3px solid var(--amber)}
-  .card-row{
-    display:flex;align-items:flex-start;
-    padding:14px 16px;gap:14px;cursor:pointer;
-    user-select:none;
+  /* card header */
+  .card-top{
+    padding:16px 18px 0;
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:8px;
   }
-  .card-left{
-    flex-shrink:0;width:110px;
-    font-size:12px;color:var(--muted);
-    line-height:1.5;
-  }
-  .card-left .time{font-weight:600;color:var(--text);font-size:13px}
-  .card-left .count{font-size:11px;color:var(--faint)}
-  .card-name{
-    display:inline-block;font-size:10px;font-weight:600;
-    background:var(--amber-bg);color:var(--amber);
-    padding:1px 6px;border-radius:3px;
-    margin-bottom:2px;max-width:100px;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .card-center{flex:1;min-width:0}
   .card-project{
     font-size:11px;color:var(--faint);
-    margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    flex:1;min-width:0;
   }
-  .card-msgs{font-size:12px;line-height:1.55}
-  .card-msgs .q{color:var(--accent)}
-  .card-msgs .a{color:#4b5563}
-  .card-msgs span{display:block}
-  .card-msgs span+span{margin-top:1px}
-  .card-right{
-    flex-shrink:0;display:flex;gap:6px;align-items:center;
+  .card-name{
+    flex-shrink:0;
+    font-size:10px;font-weight:600;
+    background:var(--amber-bg);color:var(--amber);
+    padding:2px 8px;border-radius:4px;
+    max-width:130px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  /* ── detail ── */
-  .detail{
-    display:none;padding:0 16px 16px;
+  /* card body — content preview */
+  .card-body{
+    padding:10px 18px 14px;flex:1;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .card-body .msg-block{
+    font-size:13px;line-height:1.55;
+    overflow:hidden;
+  }
+  .card-body .msg-block.user{
+    color:var(--accent);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  }
+  .card-body .msg-block.assistant{
+    color:#4b5563;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  }
+  .card-body .msg-label{
+    font-size:10px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.04em;margin-bottom:2px;
+  }
+  .card-body .msg-label.u{color:var(--accent)}
+  .card-body .msg-label.a{color:var(--muted)}
+  /* card footer */
+  .card-foot{
+    padding:10px 18px;
+    display:flex;align-items:center;gap:12px;
     border-top:1px solid var(--border);
-    background:var(--code-bg);
+    font-size:11px;color:var(--muted);
   }
-  .detail.open{display:block}
-  .detail-meta{
-    font-size:12px;color:var(--muted);margin-bottom:10px;padding-top:14px;
-    line-height:1.6;
+  .card-foot .time{font-weight:600;color:var(--text);white-space:nowrap}
+  .card-foot .stats{white-space:nowrap}
+  .card-foot .spacer{flex:1}
+  .card-foot .act{
+    font-size:11px;padding:4px 10px;border-radius:20px;
+    border:1px solid var(--border);background:var(--card);
+    color:var(--muted);cursor:pointer;font-family:inherit;
+    transition:all .15s;white-space:nowrap;
   }
-  .detail-meta strong{color:var(--text);font-weight:600}
-  .cmd-box{
-    background:var(--card);border:1px solid var(--border);
-    border-radius:var(--radius-sm);padding:10px 14px;
-    font-family:"SF Mono",Menlo,monospace;font-size:12px;
-    color:var(--text);margin-bottom:10px;
+  .card-foot .act:hover{color:var(--text);border-color:#c8c0b4}
+  .card-foot .act.go{color:var(--accent);border-color:var(--accent)}
+  .card-foot .act.go:hover{background:var(--accent);color:#fff}
+  /* ── modal ── */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;z-index:100;
+    background:rgba(0,0,0,.25);
+    backdrop-filter:blur(2px);
+    align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .modal-overlay.open{display:flex}
+  .modal{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-lg);
+    max-width:640px;width:100%;max-height:85vh;
+    overflow-y:auto;
+    animation:modalIn .2s ease;
+  }
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(12px) scale(.98)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+  .modal-header{
+    padding:20px 24px 0;
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:12px;
+  }
+  .modal-header .m-title{
+    font-family:Charter,Georgia,serif;
+    font-size:17px;font-weight:600;
+    color:var(--text);
+    flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .modal-close{
+    flex-shrink:0;width:28px;height:28px;
+    border-radius:50%;border:1px solid var(--border);
+    background:var(--card);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:16px;line-height:1;
+    transition:all .15s;
+  }
+  .modal-close:hover{background:var(--hover);color:var(--text)}
+  .modal-body{padding:16px 24px 24px}
+  .modal-body .field{
+    margin-bottom:16px;
+  }
+  .modal-body .field-label{
+    font-size:11px;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em;
+    margin-bottom:4px;
+  }
+  .modal-body .field-value{
+    font-size:13px;color:var(--text);line-height:1.6;
+    word-break:break-word;
+  }
+  .modal-body .field-value.mono{
+    font-family:"SF Mono",Menlo,monospace;
+    font-size:12px;background:var(--code-bg);
+    padding:10px 14px;border-radius:var(--radius-sm);
+    border:1px solid var(--border);
     overflow-x:auto;white-space:pre-wrap;word-break:break-all;
   }
-  .detail-actions{display:flex;gap:8px;flex-wrap:wrap}
-  /* ── small buttons ── */
+  .modal-body .first-msg{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px 16px;
+    font-size:13px;line-height:1.65;
+    color:var(--accent);
+    max-height:200px;overflow-y:auto;
+  }
+  .modal-actions{
+    display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;
+  }
+  /* ── pills ── */
   .pill{
     font-size:11px;padding:4px 10px;border-radius:20px;
     border:1px solid var(--border);background:var(--card);
     color:var(--muted);cursor:pointer;font-family:inherit;
-    transition:all .15s;
+    transition:all .15s;white-space:nowrap;
   }
   .pill:hover{color:var(--text);border-color:#c8c0b4}
   .pill.go{color:var(--accent);border-color:var(--accent)}
@@ -396,18 +494,23 @@ HTML = r"""<!doctype html>
   .empty{
     text-align:center;padding:80px 20px;color:var(--faint);
     font-family:Charter,Georgia,serif;font-size:15px;
+    grid-column:1/-1;
   }
   /* ── mark ── */
-  mark{background:#fef3c7;color:var(--amber);padding:0 1px;border-radius:2px}
+  mark{background:#fef3c7;color:var(--amber);padding:0 2px;border-radius:2px}
   /* ── responsive ── */
+  @media(max-width:900px){
+    .card-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  }
   @media(max-width:600px){
+    .card-grid{grid-template-columns:1fr;gap:10px}
     .header{padding:14px 16px 12px}
     .main{padding:0 16px 32px}
-    .card-row{padding:12px;gap:10px}
-    .card-left{width:90px}
-    .card-right{flex-direction:column;align-items:flex-end}
     .toolbar{flex-direction:column}
     .search-wrap{min-width:100%}
+    .modal-overlay{padding:12px}
+    .modal-header{padding:16px 18px 0}
+    .modal-body{padding:12px 18px 18px}
   }
 </style>
 </head>
@@ -432,11 +535,22 @@ HTML = r"""<!doctype html>
 <div class="cleanup-msg" id="cleanup-msg"></div>
 
 <div class="main">
-  <div class="list" id="list"></div>
+  <div class="grid-wrap" id="list"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="m-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
 </div>
 
 <script>
-let all=[],sortKey="time",sortAsc=true;
+let all=[];
 
 function $(id){return document.getElementById(id)}
 
@@ -465,7 +579,7 @@ function esc(s){
 }
 
 function escAttr(s){
-  return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;")
+  return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/\\/g,"\\\\").replace(/'/g,"&#39;")
 }
 
 function highlight(text,q){
@@ -483,8 +597,8 @@ function shortProject(path){
 }
 
 function render(){
-  const q=document.getElementById("q").value
-  const proj=document.getElementById("proj-filter").value
+  const q=$("q").value
+  const proj=$("proj-filter").value
   let data=[...all]
 
   if(proj) data=data.filter(s=>s.project===proj||s.project_encoded===proj)
@@ -499,73 +613,129 @@ function render(){
     )
   }
 
-  data.sort((a,b)=>{
-    let va,vb
-    if(sortKey==="time"){va=a.mtime;vb=b.mtime}
-    else if(sortKey==="project"){va=a.project||"";vb=b.project||""}
-    else if(sortKey==="msgs"){va=a.msgs;vb=b.msgs}
-    if(va<vb)return sortAsc?1:-1
-    if(va>vb)return sortAsc?-1:1
-    return 0
-  })
+  // sort by time desc
+  data.sort((a,b)=>b.mtime-a.mtime)
 
-  let lastSep="",html=""
+  let lastSep="",cards="",openGrid=false
 
   data.forEach(s=>{
     const sep=dateLabel(s.mtime)
     if(sep!==lastSep){
+      if(openGrid){cards+="</div>";openGrid=false}
       lastSep=sep
-      html+=`<div class="date-sep">${sep}</div>`
+      cards+=`<div class="date-sep">${sep}</div><div class="card-grid">`
+      openGrid=true
     }
 
     const namedClass=s.name?" named":""
     const nameTag=s.name?`<span class="card-name">${esc(s.name)}</span>`:""
-    const msgsHtml=s.last.map(m=>
-      `<span class="${m.role==='user'?'q':'a'}">${highlight(m.text.slice(0,140),q)}</span>`
-    ).join("")
 
-    html+=`<div class="card${namedClass}">
-      <div class="card-row" onclick="toggleDetail('${s.id}')">
-        <div class="card-left">
-          ${nameTag}
-          <div class="time">${fmtTime(s.mtime)}</div>
-          <div class="count">${s.msgs} 条消息 · ${s.size_kb}KB</div>
-        </div>
-        <div class="card-center">
-          <div class="card-project">${esc(shortProject(s.project))}</div>
-          <div class="card-msgs">${msgsHtml||'<span class="a" style="color:var(--faint)">(空对话)</span>'}</div>
-        </div>
-        <div class="card-right">
-          <button class="pill go" onclick="event.stopPropagation();copyText('cd &quot;${escAttr(s.project)}&quot; && claude --resume &quot;${s.id}&quot;',this)">恢复</button>
-        </div>
+    // Build message preview blocks
+    let msgsHtml=""
+    if(s.first){
+      msgsHtml+=`<div class="msg-block user"><div class="msg-label u">Q</div>${highlight(s.first.slice(0,300),q)}</div>`
+    }
+    // Show last assistant response if available
+    const lastA=s.last.filter(m=>m.role==="assistant").slice(-1)
+    if(lastA.length&&lastA[0].text){
+      msgsHtml+=`<div class="msg-block assistant"><div class="msg-label a">A</div>${highlight(lastA[0].text.slice(0,300),q)}</div>`
+    }
+    if(!msgsHtml){
+      msgsHtml='<div class="msg-block assistant" style="color:var(--faint)">(空对话)</div>'
+    }
+
+    cards+=`<div class="card${namedClass}" onclick="openModal('${escAttr(s.id)}')">
+      <div class="card-top">
+        <span class="card-project">${esc(shortProject(s.project))}</span>
+        ${nameTag}
       </div>
-      <div class="detail" id="detail-${s.id}">
-        <div class="detail-meta">
-          ${s.name?`<strong style="color:var(--amber)">${esc(s.name)}</strong> · `:""}
-          <strong>Session:</strong> ${esc(s.id)}<br>
-          <strong>项目:</strong> ${esc(s.project)}<br>
-          <strong>时间:</strong> ${fmtTime(s.mtime)} · ${s.msgs} 条消息 · ${s.size_kb}KB
-        </div>
-        ${s.first?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">第一条消息:</div><div style="font-size:12px;margin-bottom:10px;line-height:1.5;color:var(--text)">${esc(s.first)}</div>`:""}
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">恢复命令 (复制到终端):</div>
-        <div class="cmd-box">cd "${esc(s.project)}" && claude --resume "${s.id}"</div>
-        <div class="detail-actions">
-          <button class="pill go" onclick="copyText('cd &quot;${escAttr(s.project)}&quot; && claude --resume &quot;${s.id}&quot;',this)">复制恢复命令</button>
-          <button class="pill" onclick="copyText('${s.id}',this)">复制 Session ID</button>
-          <button class="pill danger" onclick="deleteOne('${s.id}',this)">删除此对话</button>
-        </div>
+      <div class="card-body">${msgsHtml}</div>
+      <div class="card-foot">
+        <span class="time">${fmtTime(s.mtime)}</span>
+        <span class="stats">${s.msgs} 条 · ${s.size_kb}KB</span>
+        <span class="spacer"></span>
+        <button class="act go" onclick="event.stopPropagation();copyResume('${escAttr(s.project)}','${escAttr(s.id)}',this)">恢复</button>
       </div>
     </div>`
   })
 
-  document.getElementById("list").innerHTML=html||'<div class="empty">没有匹配的对话</div>'
-  document.getElementById("total").textContent=all.length
+  if(openGrid){cards+="</div>"}
+
+  $("list").innerHTML=cards||'<div class="empty">没有匹配的对话</div>'
+  $("total").textContent=all.length
 }
 
-function toggleDetail(sid){
-  const el=document.getElementById("detail-"+sid)
-  if(!el)return
-  el.classList.toggle("open")
+// ── Modal ──
+
+function openModal(sid){
+  const s=all.find(x=>x.id===sid)
+  if(!s)return
+
+  $("modal-title").innerHTML=(s.name?esc(s.name):esc(s.id_short+"..."))
+  const lastA=s.last.filter(m=>m.role==="assistant").slice(-1)
+  const lastAText=lastA.length?lastA[0].text:""
+
+  $("modal-body").innerHTML=`
+    <div class="field">
+      <div class="field-label">会话名称</div>
+      <div class="field-value">${s.name?esc(s.name):'<span style="color:var(--faint)">未命名</span>'}</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Session ID</div>
+      <div class="field-value mono">${esc(s.id)}</div>
+    </div>
+    <div class="field">
+      <div class="field-label">项目路径</div>
+      <div class="field-value">${esc(s.project)}</div>
+    </div>
+    <div class="field">
+      <div class="field-label">时间 & 统计</div>
+      <div class="field-value">${fmtTime(s.mtime)} · ${s.msgs} 条消息 · ${s.size_kb}KB</div>
+    </div>
+    ${s.first?`
+    <div class="field">
+      <div class="field-label">第一条消息</div>
+      <div class="first-msg">${esc(s.first)}</div>
+    </div>`:""}
+    ${lastAText?`
+    <div class="field">
+      <div class="field-label">最后回复</div>
+      <div class="first-msg" style="color:#4b5563">${esc(lastAText.slice(0,500))}</div>
+    </div>`:""}
+    <div class="field">
+      <div class="field-label">恢复命令</div>
+      <div class="field-value mono">cd "${esc(s.project)}" && claude --resume "${s.id}"</div>
+    </div>
+    <div class="modal-actions">
+      <button class="pill go" onclick="copyResume('${escAttr(s.project)}','${escAttr(s.id)}',this)">复制恢复命令</button>
+      <button class="pill" onclick="copySid('${escAttr(s.id)}',this)">复制 Session ID</button>
+      <button class="pill danger" onclick="deleteOne('${escAttr(s.id)}',this)">删除此对话</button>
+    </div>
+  `
+
+  $("modal-overlay").classList.add("open")
+  document.body.style.overflow="hidden"
+}
+
+function closeModal(e){
+  if(e&&e.target!==$("modal-overlay"))return
+  $("modal-overlay").classList.remove("open")
+  document.body.style.overflow=""
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeModal()
+})
+
+// ── Actions ──
+
+async function copyResume(project,sid,btn){
+  const text=`cd "${project}" && claude --resume "${sid}"`
+  copyText(text,btn)
+}
+
+async function copySid(sid,btn){
+  copyText(sid,btn)
 }
 
 async function copyText(text,btn){
@@ -588,9 +758,8 @@ async function loadSessions(){
     all=[]
     console.error(e)
   }
-  // fill project filter
   const projects=[...new Set(all.map(s=>s.project).filter(Boolean))].sort()
-  const sel=document.getElementById("proj-filter")
+  const sel=$("proj-filter")
   const cur=sel.value
   sel.innerHTML='<option value="">全部项目</option>'+projects.map(p=>{
     const label=p.split("/").filter(Boolean).slice(-2).join("/")||p
@@ -611,7 +780,9 @@ async function deleteOne(sid,btn){
     if(d.ok){
       btn.textContent="已删除"
       btn.classList.add("done")
-      setTimeout(()=>loadSessions(),800)
+      all=all.filter(x=>x.id!==sid)
+      render()
+      closeModal()
     }else{
       alert("删除失败: "+(d.error||"未知错误"))
       btn.textContent=orig
@@ -625,13 +796,13 @@ async function deleteOne(sid,btn){
 }
 
 async function doCleanup(){
-  const btn=document.getElementById("btn-cleanup")
+  const btn=$("btn-cleanup")
   btn.textContent="扫描中..."
   btn.disabled=true
   try{
     const r=await fetch("api/cleanup")
     const d=await r.json()
-    const msg=document.getElementById("cleanup-msg")
+    const msg=$("cleanup-msg")
     if(d.count===0){
       msg.className="cleanup-msg ok"
       msg.style.display="block"
@@ -655,19 +826,18 @@ async function doDelete(){
   try{
     const r=await fetch("api/cleanup",{method:"POST"})
     const d=await r.json()
-    document.getElementById("cleanup-msg").className="cleanup-msg ok"
-    document.getElementById("cleanup-msg").innerHTML="已删除 "+d.count+" 个对话"
+    $("cleanup-msg").className="cleanup-msg ok"
+    $("cleanup-msg").innerHTML="已删除 "+d.count+" 个对话"
     loadSessions()
   }catch(e){
     alert("删除失败: "+e.message)
   }
 }
 
-// sort — keep it simple, always by time for now
-document.getElementById("q").addEventListener("input",render)
-document.getElementById("proj-filter").addEventListener("change",render)
-document.getElementById("btn-refresh").addEventListener("click",loadSessions)
-document.getElementById("btn-cleanup").addEventListener("click",doCleanup)
+$("q").addEventListener("input",render)
+$("proj-filter").addEventListener("change",render)
+$("btn-refresh").addEventListener("click",loadSessions)
+$("btn-cleanup").addEventListener("click",doCleanup)
 
 loadSessions()
 </script>
