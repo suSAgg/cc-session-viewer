@@ -1,0 +1,26 @@
+name: decode-kousuan-pdf
+on:
+  workflow_dispatch:
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode base64 into real PDF
+        run: |
+          set -euo pipefail
+          base64 -d tmp-pan-upload/grade1-kousuan.pdf > tmp-pan-upload/grade1-kousuan-bin.pdf
+          # verify magic
+          head -c 4 tmp-pan-upload/grade1-kousuan-bin.pdf | grep -q '%PDF'
+          mv tmp-pan-upload/grade1-kousuan-bin.pdf tmp-pan-upload/grade1-kousuan-real.pdf
+          ls -la tmp-pan-upload/
+      - name: Commit binary PDF
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tmp-pan-upload/grade1-kousuan-real.pdf
+          git commit -m "temp: add decoded binary kouSuan PDF for Baidu URL fetch"
+          git push
